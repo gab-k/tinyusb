@@ -322,7 +322,7 @@ uint16_t tu_desc_get_interface_total_len(tusb_desc_interface_t const* desc_itf, 
 //--------------------------------------------------------------------+
 
 bool tu_edpt_stream_init(tu_edpt_stream_t* s, bool is_host, bool is_tx, bool overwritable,
-                         void* ff_buf, uint16_t ff_bufsize, uint8_t* ep_buf, uint16_t ep_bufsize) {
+                         void* ff_buf, uint32_t ff_bufsize, uint8_t* ep_buf, uint16_t ep_bufsize) {
   (void) is_tx;
 
   s->is_host = is_host;
@@ -363,7 +363,7 @@ TU_ATTR_ALWAYS_INLINE static inline bool stream_claim(uint8_t hwid, tu_edpt_stre
   return false;
 }
 
-TU_ATTR_ALWAYS_INLINE static inline bool stream_xfer(uint8_t hwid, tu_edpt_stream_t* s, uint16_t count) {
+TU_ATTR_ALWAYS_INLINE static inline bool stream_xfer(uint8_t hwid, tu_edpt_stream_t* s, uint32_t count) {
   if (s->is_host) {
     #if CFG_TUH_ENABLED
     return usbh_edpt_xfer(hwid, s->ep_addr, count ? s->ep_buf : NULL, count);
@@ -408,7 +408,7 @@ uint32_t tu_edpt_stream_write_xfer(uint8_t hwid, tu_edpt_stream_t* s) {
   TU_VERIFY(stream_claim(hwid, s), 0);
 
   // Pull data from FIFO -> EP buf
-  uint16_t const count = tu_fifo_read_n(&s->ff, s->ep_buf, s->ep_bufsize);
+  uint32_t const count = tu_fifo_read_n(&s->ff, s->ep_buf, s->ep_bufsize);
 
   if (count) {
     TU_ASSERT(stream_xfer(hwid, s, count), 0);
@@ -429,10 +429,10 @@ uint32_t tu_edpt_stream_write(uint8_t hwid, tu_edpt_stream_t* s, void const* buf
     TU_VERIFY(stream_claim(hwid, s), 0);
     const uint32_t xact_len = tu_min32(bufsize, s->ep_bufsize);
     memcpy(s->ep_buf, buffer, xact_len);
-    TU_ASSERT(stream_xfer(hwid, s, (uint16_t) xact_len), 0);
+    TU_ASSERT(stream_xfer(hwid, s, (uint32_t) xact_len), 0);
     return xact_len;
   } else {
-    const uint16_t ret = tu_fifo_write_n(&s->ff, buffer, (uint16_t) bufsize);
+    const uint32_t ret = tu_fifo_write_n(&s->ff, buffer, (uint32_t) bufsize);
 
     // flush if fifo has more than packet size or
     // in rare case: fifo depth is configured too small (which never reach packet size)
@@ -473,7 +473,7 @@ uint32_t tu_edpt_stream_read_xfer(uint8_t hwid, tu_edpt_stream_t* s) {
     return s->ep_bufsize;
   } else {
     const uint16_t mps = s->is_mps512 ? TUSB_EPSIZE_BULK_HS : TUSB_EPSIZE_BULK_FS;
-    uint16_t available = tu_fifo_remaining(&s->ff);
+    uint32_t available = tu_fifo_remaining(&s->ff);
 
     // Prepare for incoming data but only allow what we can store in the ring buffer.
     // TODO Actually we can still carry out the transfer, keeping count of received bytes
@@ -488,8 +488,8 @@ uint32_t tu_edpt_stream_read_xfer(uint8_t hwid, tu_edpt_stream_t* s) {
 
     if (available >= mps) {
       // multiple of packet size limit by ep bufsize
-      uint16_t count = (uint16_t) (available & ~(mps - 1));
-      count = tu_min16(count, s->ep_bufsize);
+      uint32_t count = (available & ~(mps - 1));
+      count = tu_min32(count, s->ep_bufsize);
       TU_ASSERT(stream_xfer(hwid, s, count), 0);
       return count;
     } else {
@@ -501,7 +501,7 @@ uint32_t tu_edpt_stream_read_xfer(uint8_t hwid, tu_edpt_stream_t* s) {
 }
 
 uint32_t tu_edpt_stream_read(uint8_t hwid, tu_edpt_stream_t* s, void* buffer, uint32_t bufsize) {
-  uint32_t num_read = tu_fifo_read_n(&s->ff, buffer, (uint16_t) bufsize);
+  uint32_t num_read = tu_fifo_read_n(&s->ff, buffer, (uint32_t) bufsize);
   tu_edpt_stream_read_xfer(hwid, s);
   return num_read;
 }

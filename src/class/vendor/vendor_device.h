@@ -122,6 +122,10 @@ TU_ATTR_ALWAYS_INLINE static inline uint32_t tud_vendor_write_available(void) {
 TU_ATTR_WEAK void tud_vendor_rx_cb(uint8_t itf, uint8_t const* buffer, uint16_t bufsize);
 // Invoked when last rx transfer finished
 TU_ATTR_WEAK void tud_vendor_tx_cb(uint8_t itf, uint32_t sent_bytes);
+// Get the Receive FIFO (for DMA transfer)
+tu_fifo_t* tud_vendor_n_get_rx_ff(uint8_t itf);
+// Manually prepare the vendor OUT endpoint to receive the next data transfer, re-arms the USB hardware endpoint.
+uint32_t tud_vendor_n_receive_prepare(uint8_t itf);
 
 //--------------------------------------------------------------------+
 // Inline Functions

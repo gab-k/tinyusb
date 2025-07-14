@@ -282,4 +282,17 @@ bool vendord_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result, uint
   return true;
 }
 
+// Get the Receive FIFO (for DMA transfer)
+tu_fifo_t* tud_vendor_n_get_rx_ff(uint8_t itf) {
+  TU_ASSERT(itf < CFG_TUD_CDC);
+  return &_vendord_itf[itf].rx.stream.ff;
+}
+
+uint32_t tud_vendor_n_receive_prepare(uint8_t itf) {
+  TU_ASSERT(itf < CFG_TUD_VENDOR);
+  // Get a pointer to the internal interface struct
+  vendord_interface_t* p_vendor = &_vendord_itf[itf];
+  return tu_edpt_stream_read_xfer(BOARD_TUD_RHPORT, &p_vendor->rx.stream);
+}
+
 #endif

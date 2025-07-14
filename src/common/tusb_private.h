@@ -87,7 +87,7 @@ bool tu_edpt_release(tu_edpt_state_t* ep_state, osal_mutex_t mutex);
 
 // Init an endpoint stream
 bool tu_edpt_stream_init(tu_edpt_stream_t* s, bool is_host, bool is_tx, bool overwritable,
-                         void* ff_buf, uint16_t ff_bufsize, uint8_t* ep_buf, uint16_t ep_bufsize);
+                         void* ff_buf, uint32_t ff_bufsize, uint8_t* ep_buf, uint16_t ep_bufsize);
 
 // Deinit an endpoint stream
 bool tu_edpt_stream_deinit(tu_edpt_stream_t* s);
@@ -142,7 +142,7 @@ uint32_t tu_edpt_stream_read_xfer(uint8_t hwid, tu_edpt_stream_t* s);
 TU_ATTR_ALWAYS_INLINE static inline
 void tu_edpt_stream_read_xfer_complete(tu_edpt_stream_t* s, uint32_t xferred_bytes) {
   if (tu_fifo_depth(&s->ff)) {
-    tu_fifo_write_n(&s->ff, s->ep_buf, (uint16_t) xferred_bytes);
+    tu_fifo_write_n_dma(&s->ff, s->ep_buf, xferred_bytes);
   }
 }
 
@@ -150,7 +150,7 @@ void tu_edpt_stream_read_xfer_complete(tu_edpt_stream_t* s, uint32_t xferred_byt
 TU_ATTR_ALWAYS_INLINE static inline
 void tu_edpt_stream_read_xfer_complete_with_buf(tu_edpt_stream_t* s, const void * buf, uint32_t xferred_bytes) {
   if (tu_fifo_depth(&s->ff)) {
-    tu_fifo_write_n(&s->ff, buf, (uint16_t) xferred_bytes);
+    tu_fifo_write_n(&s->ff, buf, xferred_bytes);
   }
 }
 
